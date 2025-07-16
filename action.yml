@@ -23,6 +23,8 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
     - name: Extract SSYNC tickets from commit messages
       id: extract-tickets
       shell: bash
