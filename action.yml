@@ -13,35 +13,38 @@ inputs:
   jira-project:
     required: true
     description: 'Jira project key'
-  release-prefix:
+  release-name:
     required: true
-    description: 'Release name prefix (e.g. Connex Release)'
-  major-version:
-    required: true
-    description: 'Major version number'
-  tickets:
-    required: true
-    description: 'Comma-separated list of Jira ticket keys'
+    description: 'Release name (e.g. Release 1.0.0)'
+
 runs:
   using: "composite"
   steps:
+    - name: Checkout code
+        uses: actions/checkout@v4
+
+    - name: Extract SSYNC tickets from commit messages
+      id: extract-tickets
+      run: |
+        tickets=$(git log -1 --pretty=%B | grep -oE '${{ inputs.jira-project }}-[0-9]+' | sort | uniq | paste -sd "," -)
+        echo "tickets=$tickets" >> $GITHUB_OUTPUT
+
     - name: Get Jira version ID
       shell: bash
       run: |
-        release_name="${{ inputs.release-prefix }} ${{ inputs.major-version }}"
         response=$(curl -s -u "${{ inputs.jira-email }}:${{ inputs.jira-token }}" \
           -H "Accept: application/json" \
           "https://${{ inputs.jira-domain }}/rest/api/2/project/${{ inputs.jira-project }}/versions")
-        version_id=$(echo "$response" | jq -r --arg name "$release_name" '.[] | select(.name|gsub("^\\s+|\\s+$";"") == $name) | .id')
+        version_id=$(echo "$response" | jq -r --arg name "${{ inputs.release-name }}" '.[] | select(.name|gsub("^\\s+|\\s+$";"") == $name) | .id')
         if [[ -z "$version_id" ]]; then
-          echo "Could not find Jira version ID for $release_name"
+          echo "Could not find Jira version ID for ${{ inputs.release-name }}"
           exit 1
         fi
         echo "version_id=$version_id" >> $GITHUB_ENV
     - name: Assign tickets to Jira Release
       shell: bash
       run: |
-        for ticket in $(echo "${{ inputs.tickets }}" | tr ',' ' '); do
+        for ticket in $(echo "${{ steps.extract-tickets.outputs.tickets }}" | tr ',' ' '); do
           curl -X PUT \
             -u "${{ inputs.jira-email }}:${{ inputs.jira-token }}" \
             -H "Content-Type: application/json" \
