@@ -25,6 +25,7 @@ runs:
   steps:
     - name: Extract SSYNC tickets from commit messages
       id: extract-tickets
+      shell: bash
       run: |
         tickets=$(git log -1 --pretty=%B | grep -oE '${{ inputs.jira-ticket-key-prefix }}-[0-9]+' | sort | uniq | paste -sd "," -)
         echo "tickets=$tickets" >> $GITHUB_OUTPUT
