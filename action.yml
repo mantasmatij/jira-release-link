@@ -24,10 +24,10 @@ runs:
   using: "composite"
   steps:
     - name: Extract SSYNC tickets from commit messages
-        id: extract-tickets
-        run: |
-          tickets=$(git log -1 --pretty=%B | grep -oE '${{ inputs.jira-ticket-key-prefix }}-[0-9]+' | sort | uniq | paste -sd "," -)
-          echo "tickets=$tickets" >> $GITHUB_OUTPUT
+      id: extract-tickets
+      run: |
+        tickets=$(git log -1 --pretty=%B | grep -oE '${{ inputs.jira-ticket-key-prefix }}-[0-9]+' | sort | uniq | paste -sd "," -)
+        echo "tickets=$tickets" >> $GITHUB_OUTPUT
     - name: Get Jira version ID
       shell: bash
       run: |
