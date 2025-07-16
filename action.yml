@@ -13,16 +13,21 @@ inputs:
   jira-project:
     required: true
     description: 'Jira project key'
+  jira-ticket-key-prefix:
+    required: false
+    description: 'Jira ticket key prefix (e.g. TICKET)'
   release-name:
     required: true
     description: 'Release name (e.g. Release 1.0.0)'
-  tickets:
-    required: true
-    description: 'Comma-separated list of Jira ticket keys'
-    
+
 runs:
   using: "composite"
   steps:
+    - name: Extract SSYNC tickets from commit messages
+        id: extract-tickets
+        run: |
+          tickets=$(git log -1 --pretty=%B | grep -oE '${{ inputs.jira-ticket-key-prefix }}-[0-9]+' | sort | uniq | paste -sd "," -)
+          echo "tickets=$tickets" >> $GITHUB_OUTPUT
     - name: Get Jira version ID
       shell: bash
       run: |
@@ -38,7 +43,7 @@ runs:
     - name: Assign tickets to Jira Release
       shell: bash
       run: |
-        for ticket in $(echo "${{ inputs.tickets }}" | tr ',' ' '); do
+        for ticket in $(echo "${{ steps.extract-tickets.outputs.tickets }}" | tr ',' ' '); do
           curl -X PUT \
             -u "${{ inputs.jira-email }}:${{ inputs.jira-token }}" \
             -H "Content-Type: application/json" \
