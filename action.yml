@@ -61,7 +61,7 @@ runs:
               "https://${{ inputs.jira-domain }}/rest/api/2/issue/$ticket")
             fixVersions=$(echo "$ticketResponse" | jq -r '.fields.fixVersions[].name')
             skip_update=false
-            if [[ -n ${{ inputs.release-name-regex }}]]
+            if [[ -n "${{ inputs.release-name-regex }}" ]]
               while IFS= read -r fv; do
                 if [[ $fv =~ ^${{ inputs.release-name-regex }}$ ]]; then
                   if [[ "$fv" < "$release_name"]]; then
