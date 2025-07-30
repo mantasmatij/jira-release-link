@@ -19,6 +19,9 @@ inputs:
   release-name:
     required: true
     description: 'Release name (e.g. Release 1.0.0)'
+  release-name-regex:
+    required: false
+    description: 'Regex to check if ticket has release already assigned (e.g. Release ([0-9]+)). If not provided - check is skipped.'
 
 runs:
   using: "composite"
@@ -32,6 +35,7 @@ runs:
         tickets=$(git log -1 --pretty=%B | grep -oE '${{ inputs.jira-ticket-key-prefix }}-[0-9]+' | sort | uniq | paste -sd "," -)
         echo "tickets=$tickets" >> $GITHUB_OUTPUT
     - name: Get Jira version ID
+      id: get-jira-version-id
       shell: bash
       run: |
         response=$(curl -s -u "${{ inputs.jira-email }}:${{ inputs.jira-token }}" \
@@ -42,14 +46,42 @@ runs:
           echo "Could not find Jira version ID for ${{ inputs.release-name }}"
           exit 1
         fi
-        echo "version_id=$version_id" >> $GITHUB_ENV
+        echo "version_id=$version_id" >> $GITHUB_OUTPUT
     - name: Assign tickets to Jira Release
       shell: bash
       run: |
-        for ticket in $(echo "${{ steps.extract-tickets.outputs.tickets }}" | tr ',' ' '); do
-          curl -X PUT \
-            -u "${{ inputs.jira-email }}:${{ inputs.jira-token }}" \
-            -H "Content-Type: application/json" \
-            --data "{\"update\":{\"fixVersions\":[{\"add\":{\"id\":\"$version_id\"}}]}}" \
-            "https://${{ inputs.jira-domain }}/rest/api/2/issue/$ticket"
-        done
+        version_id=${{ steps.get-jira-version-id.outputs.version_id }}
+        release_name=${{ inputs.release-name }}
+        tickets=${{ steps.extract-tickets.outputs.tickets }}
+        if [[ -n $tickets ]]; then
+          for ticket in $(echo "$tickets" | tr ',' ' '); do
+            ticketResponse=$(curl -s -X GET \
+              -u "${{ inputs.jira-email }}:${{ inputs.jira-token }}" \
+              -H "Content-Type: application/json" \
+              "https://${{ inputs.jira-domain }}/rest/api/2/issue/$ticket")
+            fixVersions=$(echo "$ticketResponse" | jq -r '.fields.fixVersions[].name')
+            skip_update=false
+            if [[ -n ${{ inputs.release-name-regex }}]]
+              while IFS= read -r fv; do
+                if [[ $fv =~ ^${{ inputs.release-name-regex }}$ ]]; then
+                  if [[ "$fv" < "$release_name"]]; then
+                    echo "Ticket $ticket already has $fv, skipping version link."
+                    skip_update=true
+                    break
+                  fi
+                fi
+              done <<< "$fixVersions"
+            fi
+            if [ "$skip_update" = true ]; then
+              continue
+            else
+              curl -X PUT \
+                -u "${{ inputs.jira-email }}:${{ inputs.jira-token }}" \
+                -H "Content-Type: application/json" \
+                --data "{\"update\":{\"fixVersions\":[{\"add\":{\"id\":\"$version_id\"}}]}}" \
+                "https://${{ inputs.jira-domain }}/rest/api/2/issue/$ticket"
+            fi
+          done
+        else
+          echo "No tickets found in commit message."
+        fi
