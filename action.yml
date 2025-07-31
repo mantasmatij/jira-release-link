@@ -32,7 +32,11 @@ runs:
       id: extract-tickets
       shell: bash
       run: |
-        tickets=$(git log -1 --pretty=%B | grep -oE '${{ inputs.jira-ticket-key-prefix }}-[0-9]+' | sort | uniq | paste -sd "," -)
+        tickets=$(
+          git log -1 --pretty=%B | \
+          grep -oE '${{ inputs.jira-ticket-key-prefix }}-[0-9]+' || true | \
+          sort | uniq | paste -sd "," -
+        )
         echo "tickets=$tickets" >> $GITHUB_OUTPUT
     - name: Get Jira version ID
       id: get-jira-version-id
@@ -64,13 +68,8 @@ runs:
             skip_update=false
             if [[ -n "$release_name_regex" ]]; then
               while IFS= read -r fv; do
-                echo "Test 1"
-                echo $fv
-                echo $release_name_regex
                 if echo "$fv" | grep -qE "^$release_name_regex$" 2>/dev/null; then
-                  echo "Test 2"
                   if [[ "$fv" < "$release_name" ]]; then
-                    echo "Test 3"
                     echo "Ticket $ticket already has $fv, skipping version link."
                     skip_update=true
                     break
