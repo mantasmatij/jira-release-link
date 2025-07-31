@@ -67,7 +67,7 @@ runs:
                 echo "Test 1"
                 echo $fv
                 echo $release_name_regex
-                if [[ "$fv" =~ ^$release-name-regex$ ]]; then
+                if echo "$fv" | grep qE "^$release_name_regex$" 2>/dev/null; then
                   echo "Test 2"
                   if [[ "$fv" < "$release_name" ]]; then
                     echo "Test 3"
