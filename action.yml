@@ -64,8 +64,11 @@ runs:
             skip_update=false
             if [[ -n "$release_name_regex" ]]; then
               while IFS= read -r fv; do
-                if [[ $fv =~ ^${{ inputs.release-name-regex }}$ ]]; then
+                echo "Test 1"
+                if [[ $fv =~ ^$release-name-regex$ ]]; then
+                  echo "Test 2"
                   if [[ "$fv" < "$release_name" ]]; then
+                    echo "Test 3"
                     echo "Ticket $ticket already has $fv, skipping version link."
                     skip_update=true
                     break
