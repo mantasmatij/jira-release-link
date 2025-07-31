@@ -53,7 +53,7 @@ runs:
         version_id=${{ steps.get-jira-version-id.outputs.version_id }}
         release_name="${{ inputs.release-name }}"
         tickets="${{ steps.extract-tickets.outputs.tickets }}"
-        release_name_regex=${{ inputs.release-name-regex }}
+        release_name_regex="${{ inputs.release-name-regex }}"
         if [[ -n $tickets ]]; then
           for ticket in $(echo "$tickets" | tr ',' ' '); do
             ticketResponse=$(curl -s -X GET \
@@ -65,6 +65,8 @@ runs:
             if [[ -n "$release_name_regex" ]]; then
               while IFS= read -r fv; do
                 echo "Test 1"
+                echo $fv
+                echo $release_name_regex
                 if [[ $fv =~ ^$release-name-regex$ ]]; then
                   echo "Test 2"
                   if [[ "$fv" < "$release_name" ]]; then
