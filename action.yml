@@ -67,7 +67,7 @@ runs:
                 echo "Test 1"
                 echo $fv
                 echo $release_name_regex
-                if [[ $fv =~ ^$release-name-regex$ ]]; then
+                if [[ "$fv" =~ ^$release-name-regex$ ]]; then
                   echo "Test 2"
                   if [[ "$fv" < "$release_name" ]]; then
                     echo "Test 3"
