@@ -34,6 +34,7 @@ runs:
         node-version: '20'
     - name: Install dependencies
       run: npm install
+      shell: bash
     - name: Assign Jira tickets to release
       run: node assign-tickets.js
       shell: bash
