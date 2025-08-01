@@ -1,5 +1,5 @@
 import * as core from "@actions/core";
-import fetch, { FormData } from "node-fetch";
+import fetch from "node-fetch";
 import { execSync } from "child_process";
 import { exit } from "process";
 
@@ -173,3 +173,5 @@ function compareReleaseNames(releaseA, releaseB, regex) {
     const bNum = bMatch[0].match(r);
     return parseInt(aNum[0]) - parseInt(bNum[0]);
 }
+
+run();
