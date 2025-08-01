@@ -1,5 +1,5 @@
 import * as core from "@actions/core";
-import fetch from "node-fetch";
+import axios from "axios";
 import { execSync } from "child_process";
 import { exit } from "process";
 
@@ -10,6 +10,8 @@ class Jira {
     project;
     ticketPrefix;
     releaseName;
+    client;
+    
     constructor(email, token, domain, project, ticketPrefix, releaseName) {
         this.email = email;
         this.token = token;
@@ -17,89 +19,53 @@ class Jira {
         this.project = project;
         this.ticketPrefix = ticketPrefix;
         this.releaseName = releaseName;
+        
+        // Create axios client with common configuration
+        const authHeader = 'Basic ' + Buffer.from(`${email}:${token}`).toString('base64');
+        this.client = axios.create({
+            baseURL: `https://${domain}/rest/api/2`,
+            headers: {
+                'Authorization': authHeader,
+                'Content-Type': 'application/json'
+            }
+        });
     }
 
     async getJiraVersionId() {
-        const url=`https://${this.domain}/rest/api/2/project/${this.project}/versions`;
-        const authHeader = 'Basic ' + Buffer.from(`${this.email}:${this.token}`).toString('base64');
-
-        const response = await fetch(url, {
-            headers: {
-                'Authorization': authHeader,
-                'Content-Type': 'application/json'
+        try {
+            const response = await this.client.get(`/project/${this.project}/versions`);
+            const versions = response.data;
+            const version = versions.find(v => v.name === this.releaseName);
+            
+            if (!version) {
+                throw new Error(`Release '${this.releaseName}' not found in Jira project ${this.project}`);
             }
-        });
-
-        const responseData = await response.json();
-
-        if (!responseData || responseData.errorMessages) {
-            throw new Error(`Failed to fetch Jira versions: ${responseData.errorMessages}`);
-        }
-        const version = Array.isArray(responseData)
-            ? responseData.find((version) => version.name === this.releaseName)
-            : undefined;
-        
-        return version.id;
-    }
-
-    async getTicket(ticketId) {
-        const url=`https://${this.domain}/rest/api/2/issue/${ticketId}`;
-        const authHeader = 'Basic ' + Buffer.from(`${this.email}:${this.token}`).toString('base64');
-
-        const response = await fetch(url, {
-            headers: {
-                'Authorization': authHeader,
-                'Content-Type': 'application/json'
+            
+            return version.id;
+        } catch (error) {
+            if (error.response) {
+                throw new Error(`Failed to fetch Jira versions: ${error.response.status} ${error.response.statusText}`);
             }
-        });
-
-        const ticketData = await response.json();
-
-        if (!ticketData || ticketData.errorMessages || !ticketData.fields) {
-            throw new Error(`Failed to fetch Jira ticket ${ticketId}: ${ticketData && ticketData.errorMessages ? ticketData.errorMessages.join(', ') : 'No ticket data found.'}`);
+            throw error;
         }
-
-        return ticketData;
     }
 
     async linkTicketToRelease(ticketId, versionId) {
-        const url=`https://${this.domain}/rest/api/2/issue/${ticketId}`;
-        const authHeader = 'Basic ' + Buffer.from(`${this.email}:${this.token}`).toString('base64');
-        const body = JSON.stringify({
-            update: {
-                fixVersions: [
-                    { add: { id: versionId } }
-                ]
-            }
-        });
-
-        const response = await fetch(url, {
-            headers: {
-                'Authorization': authHeader,
-                'Content-Type': 'application/json'
-            },
-            method: "PUT",
-            body: body,
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Failed to link ticket to release: ${response.status} ${response.statusText} - ${errorText}`);
-        }
-
-        if (response.status === 204) {
-            return { success: true, message: "Ticket successfully linked to release" };
-        }
-
-        const responseText = await response.text();
-        if (responseText.trim() === '') {
-            return { success: true, message: "Ticket successfully linked to release" };
-        }
-
         try {
-            return JSON.parse(responseText);
+            await this.client.put(`/issue/${ticketId}`, {
+                update: {
+                    fixVersions: [
+                        { add: { id: versionId } }
+                    ]
+                }
+            });
+
+            return { success: true, message: "Ticket successfully linked to release" };
         } catch (error) {
-            return { success: true, message: "Ticket linked but response could not be parsed", rawResponse: responseText };
+            if (error.response) {
+                throw new Error(`Failed to link ticket to release: ${error.response.status} ${error.response.statusText}`);
+            }
+            throw error;
         }
     }
 }
@@ -112,7 +78,6 @@ async function run() {
         const jiraProject = process.env.INPUT_JIRA_PROJECT || core.getInput('jira-project');
         const jiraTicketKeyPrefix = process.env.INPUT_JIRA_TICKET_KEY_PREFIX || core.getInput('jira-ticket-key-prefix');
         const releaseName = process.env.INPUT_RELEASE_NAME || core.getInput('release-name');
-        const releaseNameRegex = process.env.INPUT_RELEASE_NAME_REGEX || core.getInput('release-name-regex');
 
 
         const jira = new Jira(
@@ -133,26 +98,7 @@ async function run() {
             exit(0);
         }
         for (const ticket of tickets) {
-            const ticketResponse = await jira.getTicket(ticket);
-            let skipUpdate = false;
-            
-            if (releaseNameRegex !== null) {
-                const fixVersions = (ticketResponse && typeof ticketResponse === 'object' && ticketResponse.fields && Array.isArray(ticketResponse.fields.fixVersions)) ? ticketResponse.fields.fixVersions : [];
-                const versionRegex = new RegExp(String.raw`${releaseNameRegex}`, 'g');
-                
-                for (const fixVersion of fixVersions) {
-                    if (versionRegex.test(fixVersion.name)) {
-                        if (compareReleaseNames(releaseName, fixVersion.name, versionRegex) >= 0) {
-                            core.info(`Ticket ${ticket} is already linked to '${fixVersion.name}'. Skipping version link.`);
-                            skipUpdate = true;
-                        }
-                    }
-                }
-            }
-            
-            if (!skipUpdate) {
-                await jira.linkTicketToRelease(ticket, versionId);
-            }
+            await jira.linkTicketToRelease(ticket, versionId);
         }
     } catch (error) {
         core.setFailed(`Error: ${error.message}`);
@@ -165,14 +111,5 @@ function getTickets(jiraTicketKeyPrefix) {
     const tickets = gitLog.match(regex);
     return tickets ? tickets.sort() : null;
 } 
-
-function compareReleaseNames(releaseA, releaseB, regex) {
-    const aMatch = releaseA.match(regex);
-    const bMatch = releaseB.match(regex);
-    const r = /\d+/g;
-    const aNum = aMatch[0].match(r);
-    const bNum = bMatch[0].match(r);
-    return parseInt(aNum[0]) - parseInt(bNum[0]);
-}
 
 run();
