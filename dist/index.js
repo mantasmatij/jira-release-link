@@ -35148,6 +35148,16 @@ async function run() {
         console.log('jiraTicketKeyPrefix:', jiraTicketKeyPrefix);
         console.log('releaseName:', releaseName);
         console.log('releaseNameRegex:', releaseNameRegex);
+        
+        // Debug: Check environment variables
+        console.log('Debug - Environment variables:');
+        console.log('INPUT_JIRA_EMAIL:', process.env.INPUT_JIRA_EMAIL ? 'SET' : 'NOT SET');
+        console.log('INPUT_JIRA_TOKEN:', process.env.INPUT_JIRA_TOKEN ? 'SET' : 'NOT SET');
+        console.log('INPUT_JIRA_DOMAIN:', process.env.INPUT_JIRA_DOMAIN);
+        console.log('INPUT_JIRA_PROJECT:', process.env.INPUT_JIRA_PROJECT);
+        console.log('INPUT_JIRA_TICKET_KEY_PREFIX:', process.env.INPUT_JIRA_TICKET_KEY_PREFIX);
+        console.log('INPUT_RELEASE_NAME:', process.env.INPUT_RELEASE_NAME);
+        console.log('INPUT_RELEASE_NAME_REGEX:', process.env.INPUT_RELEASE_NAME_REGEX);
 
         const jira = new Jira(
             jiraEmail, 
