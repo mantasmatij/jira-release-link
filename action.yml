@@ -42,3 +42,11 @@ runs:
     - name: Assign Jira tickets to release
       run: node ${{ github.action_path }}/assign-tickets.js
       shell: bash
+      with:
+        jira-email: ${{ inputs.jira-email }}
+        jira-token: ${{ inputs.jira-token }}
+        jira-domain: ${{ inputs.jira-domain }}
+        jira-project: ${{ inputs.jira-project }}
+        jira-ticket-key-prefix: ${{ inputs.jira-ticket-key-prefix }}
+        release-name: ${{ inputs.release-name }}
+        release-name-regex: ${{ inputs.release-name-regex }}
