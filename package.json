@@ -4,7 +4,8 @@
   "description": "Assigns Jira issues to a release version by version name and ticket list. Gets the last commit message and gathers Jira ticket keys to assign to a project.",
   "main": "assign-tickets.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "ncc build assign-tickets.js -o dist"
   },
   "repository": {
     "type": "git",
@@ -26,7 +27,11 @@
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-node-resolve": "^16.0.1",
     "@types/node": "^24.1.0",
-    "@types/node-fetch": "^2.6.13"
+    "@types/node-fetch": "^2.6.13",
+    "@vercel/ncc": "^0.38.3",
+    "rollup": "^4.46.2"
   }
 }
