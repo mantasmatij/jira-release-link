@@ -36,5 +36,5 @@ runs:
       run: npm install
       shell: bash
     - name: Assign Jira tickets to release
-      run: node assign-tickets.js
+      run: node ${{ github.action_path }}/assign-tickets.js
       shell: bash
