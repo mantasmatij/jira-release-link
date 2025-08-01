@@ -35139,6 +35139,16 @@ async function run() {
         const releaseName = core.getInput('release-name');
         const releaseNameRegex = core.getInput('release-name-regex');
 
+        // Debug: Log the inputs (without sensitive data)
+        console.log('Debug - Inputs received:');
+        console.log('jiraEmail:', jiraEmail ? 'SET' : 'NOT SET');
+        console.log('jiraToken:', jiraToken ? 'SET' : 'NOT SET');
+        console.log('jiraDomain:', jiraDomain);
+        console.log('jiraProject:', jiraProject);
+        console.log('jiraTicketKeyPrefix:', jiraTicketKeyPrefix);
+        console.log('releaseName:', releaseName);
+        console.log('releaseNameRegex:', releaseNameRegex);
+
         const jira = new Jira(
             jiraEmail, 
             jiraToken,
