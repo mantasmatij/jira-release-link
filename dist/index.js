@@ -36111,9 +36111,9 @@ async function run() {
             core.info("No tickets found in commit message.")
             ;(0,external_process_namespaceObject.exit)(0);
         }
-        for (const ticket of tickets) {
-            await jira.linkTicketToRelease(ticket, versionId);
-        }
+        await Promise.all(
+            tickets.map(ticket => jira.linkTicketToRelease(ticket, versionId))
+        );
     } catch (error) {
         core.setFailed(`Error: ${error.message}`);
     }
