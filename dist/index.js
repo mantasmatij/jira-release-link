@@ -35131,13 +35131,13 @@ class Jira {
 
 async function run() {
     try {
-        const jiraEmail = core.getInput('jira-email');
-        const jiraToken = core.getInput('jira-token');
-        const jiraDomain = core.getInput('jira-domain');
-        const jiraProject = core.getInput('jira-project');
-        const jiraTicketKeyPrefix = core.getInput('jira-ticket-key-prefix');
-        const releaseName = core.getInput('release-name');
-        const releaseNameRegex = core.getInput('release-name-regex');
+        const jiraEmail = process.env.INPUT_JIRA_EMAIL || core.getInput('jira-email');
+        const jiraToken = process.env.INPUT_JIRA_TOKEN || core.getInput('jira-token');
+        const jiraDomain = process.env.INPUT_JIRA_DOMAIN || core.getInput('jira-domain');
+        const jiraProject = process.env.INPUT_JIRA_PROJECT || core.getInput('jira-project');
+        const jiraTicketKeyPrefix = process.env.INPUT_JIRA_TICKET_KEY_PREFIX || core.getInput('jira-ticket-key-prefix');
+        const releaseName = process.env.INPUT_RELEASE_NAME || core.getInput('release-name');
+        const releaseNameRegex = process.env.INPUT_RELEASE_NAME_REGEX || core.getInput('release-name-regex');
 
         // Debug: Log the inputs (without sensitive data)
         console.log('Debug - Inputs received:');
