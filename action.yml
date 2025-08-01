@@ -28,65 +28,10 @@ runs:
   steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    - name: Extract SSYNC tickets from commit messages
-      id: extract-tickets
+    - name: Setup node
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - name: Assign Jira tickets to release
+      run: node assign-tickets.js
       shell: bash
-      run: |
-        tickets=$(
-          git log -1 --pretty=%B | \
-          grep -oE '${{ inputs.jira-ticket-key-prefix }}-[0-9]+' || true | \
-          sort | uniq | paste -sd "," -
-        )
-        echo "tickets=$tickets" >> $GITHUB_OUTPUT
-    - name: Get Jira version ID
-      id: get-jira-version-id
-      shell: bash
-      run: |
-        response=$(curl -s -u "${{ inputs.jira-email }}:${{ inputs.jira-token }}" \
-          -H "Accept: application/json" \
-          "https://${{ inputs.jira-domain }}/rest/api/2/project/${{ inputs.jira-project }}/versions")
-        version_id=$(echo "$response" | jq -r --arg name "${{ inputs.release-name }}" '.[] | select(.name|gsub("^\\s+|\\s+$";"") == $name) | .id')
-        if [[ -z "$version_id" ]]; then
-          echo "Could not find Jira version ID for ${{ inputs.release-name }}"
-          exit 1
-        fi
-        echo "version_id=$version_id" >> $GITHUB_OUTPUT
-    - name: Assign tickets to Jira Release
-      shell: bash
-      run: |
-        version_id=${{ steps.get-jira-version-id.outputs.version_id }}
-        release_name="${{ inputs.release-name }}"
-        tickets="${{ steps.extract-tickets.outputs.tickets }}"
-        release_name_regex="${{ inputs.release-name-regex }}"
-        if [[ -n $tickets ]]; then
-          for ticket in $(echo "$tickets" | tr ',' ' '); do
-            ticketResponse=$(curl -s -X GET \
-              -u "${{ inputs.jira-email }}:${{ inputs.jira-token }}" \
-              -H "Content-Type: application/json" \
-              "https://${{ inputs.jira-domain }}/rest/api/2/issue/$ticket")
-            fixVersions=$(echo "$ticketResponse" | jq -r '.fields.fixVersions[].name')
-            skip_update=false
-            if [[ -n "$release_name_regex" ]]; then
-              while IFS= read -r fv; do
-                if echo "$fv" | grep -qE "^$release_name_regex$" 2>/dev/null; then
-                  if [[ "$fv" < "$release_name" ]]; then
-                    echo "Ticket $ticket already has $fv, skipping version link."
-                    skip_update=true
-                    break
-                  fi
-                fi
-              done <<< "$fixVersions"
-            fi
-            if [ "$skip_update" = true ]; then
-              continue
-            else
-              curl -X PUT \
-                -u "${{ inputs.jira-email }}:${{ inputs.jira-token }}" \
-                -H "Content-Type: application/json" \
-                --data "{\"update\":{\"fixVersions\":[{\"add\":{\"id\":\"$version_id\"}}]}}" \
-                "https://${{ inputs.jira-domain }}/rest/api/2/issue/$ticket"
-            fi
-          done
-        else
-          echo "No tickets found in commit message."
-        fi

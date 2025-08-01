@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "commonjs",
+    "checkJs": true,         // Enables type checking
+    "allowJs": true,         // Supports JS files
+    "baseUrl": ".",          // Useful for import resolution
+    "paths": {
+      "*": ["node_modules/*"]
+    },
+    "types": ["node"]
+  },
+  "exclude": ["node_modules", "**/dist"]
+}
