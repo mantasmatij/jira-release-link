@@ -35,3 +35,11 @@ runs:
     - name: Assign Jira tickets to release
       run: node ${{ github.action_path }}/dist/index.js
       shell: bash
+      env:
+        INPUT_JIRA_EMAIL: ${{ inputs.jira-email }}
+        INPUT_JIRA_TOKEN: ${{ inputs.jira-token }}
+        INPUT_JIRA_DOMAIN: ${{ inputs.jira-domain }}
+        INPUT_JIRA_PROJECT: ${{ inputs.jira-project }}
+        INPUT_JIRA_TICKET_KEY_PREFIX: ${{ inputs.jira-ticket-key-prefix }}
+        INPUT_RELEASE_NAME: ${{ inputs.release-name }}
+        INPUT_RELEASE_NAME_REGEX: ${{ inputs.release-name-regex }}
