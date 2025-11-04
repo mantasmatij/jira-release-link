@@ -32,8 +32,10 @@ build/Release
 # Dependency directories
 jspm_packages/
 
-# TypeScript cache
+# TypeScript cache and build artifacts
 *.tsbuildinfo
+build/
+lib/
 
 # Optional npm cache directory
 .npm
@@ -135,4 +137,4 @@ jspm_packages/
 .Spotlight-V100
 .Trashes
 ehthumbs.db
-Thumbs.db 
+Thumbs.db
