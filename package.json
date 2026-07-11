@@ -1,6 +1,6 @@
 {
     "name": "jira-release-link",
-    "version": "2.0.1",
+    "version": "3.0.0",
     "description": "Assigns Jira issues to a release version by version name and ticket list. Gets the last commit message and gathers Jira ticket keys to assign to a project.",
     "keywords": [],
     "homepage": "https://github.com/mantasmatij/jira-release-link#readme",
