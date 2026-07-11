@@ -1,0 +1,29 @@
+{
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
+    "categories": {
+        "correctness": "error"
+    },
+    "options": {
+        "typeAware": true
+    },
+    "ignorePatterns": ["dist"],
+    "rules": {
+        "typescript/consistent-type-assertions": "error",
+        // Covered by TypeScript (no linting necessary)
+        "constructor-super": "off",
+        "getter-return": "off",
+        "no-class-assign": "off",
+        "no-const-assign": "off",
+        "no-dupe-class-members": "off",
+        "no-dupe-keys": "off",
+        "no-func-assign": "off",
+        "no-new-native-nonconstructor": "off",
+        "no-obj-calls": "off",
+        "no-setter-return": "off",
+        "no-this-before-super": "off",
+        "no-undef": "off",
+        "no-unsafe-negation": "off",
+        "no-with": "off",
+        "oxc/bad-array-method-on-arguments": "off"
+    }
+}

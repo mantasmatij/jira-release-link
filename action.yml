@@ -1,41 +1,41 @@
 name: 'Jira Release Link'
 description: 'Assigns Jira issues to a release version by version name and ticket list'
 inputs:
-  jira-email:
-    required: true
-    description: 'Jira user email'
-  jira-token:
-    required: true
-    description: 'Jira API token'
-  jira-domain:
-    required: true
-    description: 'Jira domain (e.g. company.atlassian.net)'
-  jira-project:
-    required: true
-    description: 'Jira project key'
-  jira-ticket-key-prefix:
-    required: false
-    description: 'Jira ticket key prefix (e.g. TICKET)'
-  release-name:
-    required: true
-    description: 'Release name (e.g. Release 1.0.0)'
+    jira-email:
+        required: true
+        description: 'Jira user email'
+    jira-token:
+        required: true
+        description: 'Jira API token'
+    jira-domain:
+        required: true
+        description: 'Jira domain (e.g. company.atlassian.net)'
+    jira-project:
+        required: true
+        description: 'Jira project key'
+    jira-ticket-key-prefix:
+        required: false
+        description: 'Jira ticket key prefix (e.g. TICKET)'
+    release-name:
+        required: true
+        description: 'Release name (e.g. Release 1.0.0)'
 
 runs:
-  using: "composite"
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    - name: Setup node
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-    - name: Assign Jira tickets to release
-      run: node ${{ github.action_path }}/dist/index.js
-      shell: bash
-      env:
-        INPUT_JIRA_EMAIL: ${{ inputs.jira-email }}
-        INPUT_JIRA_TOKEN: ${{ inputs.jira-token }}
-        INPUT_JIRA_DOMAIN: ${{ inputs.jira-domain }}
-        INPUT_JIRA_PROJECT: ${{ inputs.jira-project }}
-        INPUT_JIRA_TICKET_KEY_PREFIX: ${{ inputs.jira-ticket-key-prefix }}
-        INPUT_RELEASE_NAME: ${{ inputs.release-name }}
+    using: 'composite'
+    steps:
+        - name: Checkout code
+          uses: actions/checkout@v7
+        - name: Setup node
+          uses: actions/setup-node@v6
+          with:
+              node-version: '24'
+        - name: Assign Jira tickets to release
+          run: node ${{ github.action_path }}/dist/index.js
+          shell: bash
+          env:
+              INPUT_JIRA_EMAIL: ${{ inputs.jira-email }}
+              INPUT_JIRA_TOKEN: ${{ inputs.jira-token }}
+              INPUT_JIRA_DOMAIN: ${{ inputs.jira-domain }}
+              INPUT_JIRA_PROJECT: ${{ inputs.jira-project }}
+              INPUT_JIRA_TICKET_KEY_PREFIX: ${{ inputs.jira-ticket-key-prefix }}
+              INPUT_RELEASE_NAME: ${{ inputs.release-name }}

@@ -1,0 +1,5 @@
+pre-commit:
+    jobs:
+        - name: lint + build
+          run: pnpm run check:fix && pnpm run build
+          stage_fixed: true
