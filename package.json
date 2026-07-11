@@ -25,7 +25,8 @@
         "lint": "oxlint --deny-warnings .",
         "lint:fix": "oxlint --fix .",
         "check": "oxlint --deny-warnings . && oxfmt --check .",
-        "check:fix": "oxlint --fix . && oxfmt ."
+        "check:fix": "oxlint --fix . && oxfmt .",
+        "version": "./scripts/version.sh"
     },
     "dependencies": {
         "@actions/core": "^3.0.1",
