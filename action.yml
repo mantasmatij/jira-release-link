@@ -21,14 +21,14 @@ inputs:
     description: 'Release name (e.g. Release 1.0.0)'
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Checkout code
       uses: actions/checkout@v4
     - name: Setup node
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '24'
     - name: Assign Jira tickets to release
       run: node ${{ github.action_path }}/dist/index.js
       shell: bash

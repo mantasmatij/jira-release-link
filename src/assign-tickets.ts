@@ -1,11 +1,8 @@
-import { execSync } from "node:child_process";
-import { exit } from "node:process";
-import * as core from "@actions/core";
-import axios, {
-    AxiosError,
-    type AxiosInstance,
-    type AxiosResponse,
-} from "axios";
+import { execSync } from 'node:child_process';
+import { exit } from 'node:process';
+
+import * as core from '@actions/core';
+import axios, { AxiosError, type AxiosInstance, type AxiosResponse } from 'axios';
 
 interface JiraVersion {
     id: string;
@@ -45,22 +42,19 @@ class Jira {
                 password: token,
             },
             headers: {
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
             },
         });
     }
 
     async getJiraVersionId(): Promise<string> {
         try {
-            const response: AxiosResponse<JiraVersion[]> =
-                await this.client.get(`/project/${this.project}/versions`);
+            const response: AxiosResponse<JiraVersion[]> = await this.client.get(`/project/${this.project}/versions`);
             const versions = response.data;
             const version = versions.find((v) => v.name === this.releaseName);
 
             if (!version) {
-                throw new Error(
-                    `Release '${this.releaseName}' not found in Jira project ${this.project}`,
-                );
+                throw new Error(`Release '${this.releaseName}' not found in Jira project ${this.project}`);
             }
 
             return version.id;
@@ -74,10 +68,7 @@ class Jira {
         }
     }
 
-    async linkTicketToRelease(
-        ticketId: string,
-        versionId: string,
-    ): Promise<LinkTicketResult> {
+    async linkTicketToRelease(ticketId: string, versionId: string): Promise<LinkTicketResult> {
         try {
             await this.client.put(`/issue/${ticketId}`, {
                 update: {
@@ -87,7 +78,7 @@ class Jira {
 
             return {
                 success: true,
-                message: "Ticket successfully linked to release",
+                message: 'Ticket successfully linked to release',
             };
         } catch (error: unknown) {
             if (error instanceof AxiosError) {
@@ -102,19 +93,12 @@ class Jira {
 
 async function run(): Promise<void> {
     try {
-        const email =
-            process.env.INPUT_JIRA_EMAIL || core.getInput("jira-email");
-        const token =
-            process.env.INPUT_JIRA_TOKEN || core.getInput("jira-token");
-        const domain =
-            process.env.INPUT_JIRA_DOMAIN || core.getInput("jira-domain");
-        const project =
-            process.env.INPUT_JIRA_PROJECT || core.getInput("jira-project");
-        const ticketKeyPrefix =
-            process.env.INPUT_JIRA_TICKET_KEY_PREFIX ||
-            core.getInput("jira-ticket-key-prefix");
-        const releaseName =
-            process.env.INPUT_RELEASE_NAME || core.getInput("release-name");
+        const email = process.env.INPUT_JIRA_EMAIL || core.getInput('jira-email');
+        const token = process.env.INPUT_JIRA_TOKEN || core.getInput('jira-token');
+        const domain = process.env.INPUT_JIRA_DOMAIN || core.getInput('jira-domain');
+        const project = process.env.INPUT_JIRA_PROJECT || core.getInput('jira-project');
+        const ticketKeyPrefix = process.env.INPUT_JIRA_TICKET_KEY_PREFIX || core.getInput('jira-ticket-key-prefix');
+        const releaseName = process.env.INPUT_RELEASE_NAME || core.getInput('release-name');
 
         const jira = new Jira({
             email: email,
@@ -127,30 +111,24 @@ async function run(): Promise<void> {
         const tickets = getTickets(ticketKeyPrefix);
 
         if (tickets === null) {
-            core.info("No tickets found in commit message.");
+            core.info('No tickets found in commit message.');
             exit(0);
         }
-        core.info(
-            `Found the following tickets in commit message: ${tickets.join(", ")}`,
-        );
+        core.info(`Found the following tickets in commit message: ${tickets.join(', ')}`);
 
         const versionId = await jira.getJiraVersionId();
 
-        await Promise.all(
-            tickets.map((ticket) =>
-                jira.linkTicketToRelease(ticket, versionId),
-            ),
-        );
+        await Promise.all(tickets.map((ticket) => jira.linkTicketToRelease(ticket, versionId)));
     } catch (error: unknown) {
         core.setFailed(`Error: ${(error as Error).message}`);
     }
 }
 
 function getTickets(jiraTicketKeyPrefix: string): string[] | null {
-    const regex = new RegExp(`${jiraTicketKeyPrefix}-[0-9]+`, "g");
-    const gitLog = execSync("git log -1 --pretty=%B").toString().trim();
+    const regex = new RegExp(`${jiraTicketKeyPrefix}-[0-9]+`, 'g');
+    const gitLog = execSync('git log -1 --pretty=%B').toString().trim();
     const tickets = gitLog.match(regex);
     return tickets ? tickets.sort() : null;
 }
 
-run();
+void run();
