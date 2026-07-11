@@ -28,17 +28,17 @@
         "check:fix": "oxlint --fix . && oxfmt ."
     },
     "dependencies": {
-        "@actions/core": "^1.11.1",
-        "@actions/github": "^6.0.1",
-        "axios": "^1.11.0"
+        "@actions/core": "^3.0.1",
+        "@actions/github": "^9.1.1"
     },
     "devDependencies": {
         "@types/node": "^24.1.0",
-        "@vercel/ncc": "^0.38.3",
+        "@vercel/ncc": "^0.44.1",
+        "lefthook": "^2.1.10",
         "oxfmt": "^0.58.0",
         "oxlint": "^1.73.0",
         "oxlint-tsgolint": "^0.24.0",
-        "typescript": "^5.0.0"
+        "typescript": "^6.0.3"
     },
     "packageManager": "pnpm@11.11.0"
 }

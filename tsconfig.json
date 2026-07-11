@@ -11,6 +11,7 @@
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "noEmit": true,
+        "rootDir": "src",
         "types": ["node"]
     },
     "include": ["src/**/*"],

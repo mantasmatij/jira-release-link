@@ -2,7 +2,6 @@ import { execSync } from 'node:child_process';
 import { exit } from 'node:process';
 
 import * as core from '@actions/core';
-import axios, { AxiosError, type AxiosInstance, type AxiosResponse } from 'axios';
 
 interface JiraVersion {
     id: string;
@@ -17,7 +16,8 @@ interface LinkTicketResult {
 class Jira {
     private project: string;
     private releaseName: string;
-    private client: AxiosInstance;
+    private baseUrl: string;
+    private headers: Record<string, string>;
 
     constructor({
         email,
@@ -34,23 +34,30 @@ class Jira {
     }) {
         this.project = project;
         this.releaseName = releaseName;
+        this.baseUrl = `https://${domain}/rest/api/2`;
+        this.headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Basic ${btoa(`${email}:${token}`)}`,
+        };
+    }
 
-        this.client = axios.create({
-            baseURL: `https://${domain}/rest/api/2`,
-            auth: {
-                username: email,
-                password: token,
-            },
-            headers: {
-                'Content-Type': 'application/json',
-            },
+    private async request<T>(path: string, options: { method?: string; body?: string } = {}): Promise<T> {
+        const response = await fetch(`${this.baseUrl}${path}`, {
+            method: options.method ?? 'GET',
+            headers: this.headers,
+            body: options.body,
         });
+
+        if (!response.ok) {
+            throw new Error(`${response.status} ${response.statusText}`);
+        }
+
+        return (await response.json()) as T;
     }
 
     async getJiraVersionId(): Promise<string> {
         try {
-            const response: AxiosResponse<JiraVersion[]> = await this.client.get(`/project/${this.project}/versions`);
-            const versions = response.data;
+            const versions = await this.request<JiraVersion[]>(`/project/${this.project}/versions`);
             const version = versions.find((v) => v.name === this.releaseName);
 
             if (!version) {
@@ -59,21 +66,19 @@ class Jira {
 
             return version.id;
         } catch (error: unknown) {
-            if (error instanceof AxiosError) {
-                throw new Error(
-                    `Failed to fetch Jira versions: ${error.message} ${error.response?.status} ${error.response?.statusText}`,
-                );
-            }
-            throw error;
+            throw new Error(`Failed to fetch Jira versions: ${(error as Error).message}`);
         }
     }
 
     async linkTicketToRelease(ticketId: string, versionId: string): Promise<LinkTicketResult> {
         try {
-            await this.client.put(`/issue/${ticketId}`, {
-                update: {
-                    fixVersions: [{ add: { id: versionId } }],
-                },
+            await this.request(`/issue/${ticketId}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    update: {
+                        fixVersions: [{ add: { id: versionId } }],
+                    },
+                }),
             });
 
             return {
@@ -81,12 +86,7 @@ class Jira {
                 message: 'Ticket successfully linked to release',
             };
         } catch (error: unknown) {
-            if (error instanceof AxiosError) {
-                throw new Error(
-                    `Failed to link ticket to release: ${error.message} ${error.response?.status} ${error.response?.statusText}`,
-                );
-            }
-            throw error;
+            throw new Error(`Failed to link ticket to release: ${(error as Error).message}`);
         }
     }
 }
