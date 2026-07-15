@@ -52,6 +52,10 @@ class Jira {
             throw new Error(`${response.status} ${response.statusText}`);
         }
 
+        if (response.status === 204 || response.headers.get('Content-Length') === '0') {
+            return undefined as T;
+        }
+
         return (await response.json()) as T;
     }
 
@@ -128,7 +132,7 @@ function getTickets(jiraTicketKeyPrefix: string): string[] | null {
     const regex = new RegExp(`${jiraTicketKeyPrefix}-[0-9]+`, 'g');
     const gitLog = execSync('git log -1 --pretty=%B').toString().trim();
     const tickets = gitLog.match(regex);
-    return tickets ? tickets.sort() : null;
+    return tickets ? [...new Set(tickets)].sort() : null;
 }
 
 void run();
