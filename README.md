@@ -7,7 +7,7 @@ Gets the last commit message and gathers Jira ticket keys to assign to a project
 
 ```yaml
 - name: Link Jira Release
-  uses: mantasmatij/jira-release-link@v3.0.0
+  uses: mantasmatij/jira-release-link@v3
   with:
       jira-email: Jira user email
       jira-token: Jira API token
